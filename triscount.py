@@ -1,7 +1,7 @@
 bl_info = {
     "name": "Triscount",
     "description": "Some scripts 3D realtime workflow oriented",
-    "author": "Vincent (Vinc3r) Lamy",
+    "author": "Vincent (Vinc3r) Lamy, Nedovizin Alexander",
     "location": "3D view toolshelf - Addons tab",
     "category": "Mesh",
     'wiki_url': 'https://github.com/Vinc3r/BlenderScripts',
