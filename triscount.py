@@ -74,7 +74,7 @@ class TrisCountUI(bpy.types.Panel):
                 total_tris.append((o.name, len(tris), len(mod_tris)))
 
             bm.free()
-            tris_sorted = sorted(total_tris, key=itemgetter(1), reverse=True)[:scene.display_limit-1]
+            tris_sorted = sorted(total_tris, key=itemgetter(1), reverse=True)[:scene.display_limit]
 
             headRow = dataCols[0].row()
             headRow.label(text="Name")
