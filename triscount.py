@@ -8,7 +8,7 @@ bl_info = {
     'tracker_url': 'https://github.com/Vinc3r/BlenderScripts/issues',
 }
 
-import bpy
+import bpy, bmesh
 from bpy.props import IntProperty, BoolProperty
 from operator import itemgetter
 
@@ -37,6 +37,14 @@ class TrisCountUI(bpy.types.Panel):
                                 description="Maximum number of items to list",
                                 default=5, min=2, max=20)
 
+    @classmethod
+    def poll(cls, context):
+        for region in context.area.regions:
+            if region.type == "UI":
+                return True
+        else:
+            return False
+
     def draw(self, context):
         scene = context.scene
         layout = self.layout
@@ -58,12 +66,14 @@ class TrisCountUI(bpy.types.Panel):
             dataCols.append(row.column())  # mo.Tris
 
             total_tris = []
+            bm = bmesh.new()
             for o in objs:
+                bm.from_object(object=o,scene=scene,deform=True, render=True)
                 tris = [(p.index) for p in o.data.polygons if len(p.vertices) == 3]
-                mod_mesh = o.to_mesh(scene=scene, apply_modifiers=True, settings = 'RENDER')
-                mod_tris = [(p.index) for p in mod_mesh.polygons if len(p.vertices) == 3]
+                mod_tris = [(p.index) for p in bm.faces if len(p.verts) == 3]
                 total_tris.append((o.name, len(tris), len(mod_tris)))
 
+            bm.free()
             tris_sorted = sorted(total_tris, key=itemgetter(1), reverse=True)[:scene.display_limit-1]
 
             headRow = dataCols[0].row()
@@ -91,6 +101,7 @@ class TrisCountUI(bpy.types.Panel):
             totRow.label(text=us(sum_tris))
             totRow = dataCols[2].row()
             totRow.label(text=us(sum_modtris))
+
 
 
 def register():
