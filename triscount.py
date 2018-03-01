@@ -9,7 +9,6 @@ bl_info = {
 }
 
 import bpy
-import bmesh
 from bpy.props import IntProperty, BoolProperty
 from operator import itemgetter
 
@@ -40,72 +39,57 @@ class TrisCountUI(bpy.types.Panel):
                                 default=5, min=2, max=20)
 
     def draw(self, context):
+        scene = context.scene
         layout = self.layout
 
-        calculate_modifier_verts = True
-
-        meshes = [o for o in bpy.context.selected_objects if o.type == 'MESH']
+        objs = [o for o in bpy.context.selected_objects if o.type == 'MESH']
         row = layout.row()
-        if len(meshes) == 1:
+        if len(objs) == 1:
             row.label(text="1 Objects selected", icon='OBJECT_DATA')
         else:
-            row.label(text=us(len(meshes)) + " Objects selected", icon='OBJECT_DATA')
-            # row = layout.row()
-            # if len(meshes) > 10:
-            #    row.label(text="Top %d mesh objects." % 10)
-            # else:
-            #    row.label(text="Top %d mesh objects." % len(meshes))
+            row.label(text=us(len(objs)) + " Objects selected", icon='OBJECT_DATA')
 
-        totalTriInSelection = 0
-        # row = layout.row()
-        if len(meshes) > 0:
+        if len(objs) > 0:
             dataCols = []
             row = layout.row()
             dataCols.append(row.column())  # name
-            dataCols.append(row.column())  # verts
-            dataCols.append(row.column())  # verts after modifiers
             dataCols.append(row.column())  # Tris
+            dataCols.append(row.column())  # mo.Tris
 
-            topMeshes = [(o, o.name, len(o.data.vertices), len(o.data.edges), len(o.data.polygons)) for o in meshes]
-            topMeshes = sorted(topMeshes, key=itemgetter(2), reverse=True)[:12]
+            total_tris = []
+            for o in objs:
+                tris = [(p.index) for p in o.data.polygons if len(p.vertices) == 3]
+                mod_mesh = o.to_mesh(scene=scene, apply_modifiers=True, settings = 'RENDER')
+                mod_tris = [(p.index) for p in mod_mesh.polygons if len(p.vertices) == 3]
+                total_tris.append((o.name, len(tris), len(mod_tris)))
+
+            tris_sorted = sorted(total_tris, key=itemgetter(1), reverse=True)[:12]
 
             headRow = dataCols[0].row()
             headRow.label(text="Name")
             headRow = dataCols[1].row()
-            headRow.label(text="Verts")
+            headRow.label(text="(Tris)")
             headRow = dataCols[2].row()
             headRow.label(text="(mod.)")
-            headRow = dataCols[3].row()
-            headRow.label(text="(Tris)")
 
-            for mo in topMeshes:
+            sum_tris, sum_modtris = 0, 0
+            for trises in tris_sorted:
                 detailRow = dataCols[0].row()
-                detailRow.label(text=mo[1])
+                detailRow.label(text=trises[0])
                 detailRow = dataCols[1].row()
-                detailRow.label(text=us(mo[2]))
-                if calculate_modifier_verts == True:
-                    detailRow = dataCols[2].row()
-                    bm = bmesh.new()
-                    bm.from_object(mo[0], context.scene)
-                    detailRow.label(text="*" + us(len(bm.verts)))
-                    bm.free()
-                else:
-                    detailRow.label(text=us(mo[2]))
-                # detailRow = dataCols[3].row()
-                # detailRow.label(text=us(mo[3]))
+                detailRow.label(text=us(trises[1]))
+                detailRow = dataCols[2].row()
+                detailRow.label(text="*" + us(trises[2]))
 
-            vTotal = sum([len(o.data.vertices) for o in meshes])
-            bmTotal = sum([len(o.data.vertices) for o in meshes])
-            trisTotal = sum([len(o.data.vertices) for o in meshes])
+                sum_tris += trises[1]
+                sum_modtris += trises[2]
 
             totRow = dataCols[0].row()
             totRow.label(text="Total:")
             totRow = dataCols[1].row()
-            totRow.label(text=us(vTotal))
+            totRow.label(text=us(sum_tris))
             totRow = dataCols[2].row()
-            totRow.label(text=us(vTotal))
-            totRow = dataCols[3].row()
-            totRow.label(text=us(trisTotal))
+            totRow.label(text=us(sum_modtris))
 
 
 def register():
