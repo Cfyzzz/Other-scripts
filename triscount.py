@@ -34,8 +34,8 @@ class TrisCountUI(bpy.types.Panel):
     bl_region_type = "UI"
 
     bpy.types.Scene.display_limit = IntProperty(name="Display limit",
-                                description="Maximum number of items to list",
-                                default=5, min=2, max=20)
+                                                description="Maximum number of items to list",
+                                                default=5, min=2, max=20)
 
     @classmethod
     def poll(cls, context):
@@ -61,14 +61,15 @@ class TrisCountUI(bpy.types.Panel):
         if len(objs) > 0:
             dataCols = []
             row = layout.row()
-            dataCols.append(row.column())  # name
-            dataCols.append(row.column())  # Tris
-            dataCols.append(row.column())  # mo.Tris
+            dataCols.append(row.column(align=True))  # name
+            dataCols.append(row.column(align=True))  # Tris
+            dataCols.append(row.column(align=True))  # mo.Tris
 
             total_tris = []
-            bm = bmesh.new()
+            sum_tris, sum_modtris = 0, 0
             for o in objs:
-                bm.from_object(object=o,scene=scene,deform=True, render=True)
+                bm = bmesh.new()
+                bm.from_object(object=o, scene=scene, deform=True, render=True)
                 tris = 0
                 for p in o.data.polygons:
                     tris += len(p.vertices) - 2
@@ -78,8 +79,11 @@ class TrisCountUI(bpy.types.Panel):
                     mod_tris += len(p.verts) - 2
 
                 total_tris.append((o.name, tris, mod_tris))
+                sum_tris += tris
+                sum_modtris += mod_tris
 
-            bm.free()
+                bm.free()
+
             tris_sorted = sorted(total_tris, key=itemgetter(1), reverse=True)[:scene.display_limit]
 
             headRow = dataCols[0].row()
@@ -89,7 +93,6 @@ class TrisCountUI(bpy.types.Panel):
             headRow = dataCols[2].row()
             headRow.label(text="(mod.)")
 
-            sum_tris, sum_modtris = 0, 0
             for trises in tris_sorted:
                 detailRow = dataCols[0].row()
                 detailRow.label(text=trises[0])
@@ -98,16 +101,15 @@ class TrisCountUI(bpy.types.Panel):
                 detailRow = dataCols[2].row()
                 detailRow.label(text="*" + us(trises[2]))
 
-                sum_tris += trises[1]
-                sum_modtris += trises[2]
-
             totRow = dataCols[0].row()
-            totRow.label(text="Total:")
+            box = totRow.box().row()
+            box.label(text="Total:")
             totRow = dataCols[1].row()
-            totRow.label(text=us(sum_tris))
+            box = totRow.box().row()
+            box.label(text=us(sum_tris))
             totRow = dataCols[2].row()
-            totRow.label(text=us(sum_modtris))
-
+            box = totRow.box().row()
+            box.label(text=us(sum_modtris))
 
 
 def register():
