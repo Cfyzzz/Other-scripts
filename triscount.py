@@ -33,8 +33,7 @@ class TrisCountUI(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
 
-    calculate_modifier_verts = True
-    display_limit = IntProperty(name="Display limit",
+    bpy.types.Scene.display_limit = IntProperty(name="Display limit",
                                 description="Maximum number of items to list",
                                 default=5, min=2, max=20)
 
@@ -43,6 +42,8 @@ class TrisCountUI(bpy.types.Panel):
         layout = self.layout
 
         objs = [o for o in bpy.context.selected_objects if o.type == 'MESH']
+        row = layout.row()
+        row.prop(scene, "display_limit")
         row = layout.row()
         if len(objs) == 1:
             row.label(text="1 Objects selected", icon='OBJECT_DATA')
@@ -63,7 +64,7 @@ class TrisCountUI(bpy.types.Panel):
                 mod_tris = [(p.index) for p in mod_mesh.polygons if len(p.vertices) == 3]
                 total_tris.append((o.name, len(tris), len(mod_tris)))
 
-            tris_sorted = sorted(total_tris, key=itemgetter(1), reverse=True)[:12]
+            tris_sorted = sorted(total_tris, key=itemgetter(1), reverse=True)[:scene.display_limit-1]
 
             headRow = dataCols[0].row()
             headRow.label(text="Name")
