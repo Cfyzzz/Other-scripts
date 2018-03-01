@@ -69,9 +69,15 @@ class TrisCountUI(bpy.types.Panel):
             bm = bmesh.new()
             for o in objs:
                 bm.from_object(object=o,scene=scene,deform=True, render=True)
-                tris = [(p.index) for p in o.data.polygons if len(p.vertices) == 3]
-                mod_tris = [(p.index) for p in bm.faces if len(p.verts) == 3]
-                total_tris.append((o.name, len(tris), len(mod_tris)))
+                tris = 0
+                for p in o.data.polygons:
+                    tris += len(p.vertices) - 2
+
+                mod_tris = 0
+                for p in bm.faces:
+                    mod_tris += len(p.verts) - 2
+
+                total_tris.append((o.name, tris, mod_tris))
 
             bm.free()
             tris_sorted = sorted(total_tris, key=itemgetter(1), reverse=True)[:scene.display_limit]
