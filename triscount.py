@@ -36,6 +36,9 @@ class TrisCountUI(bpy.types.Panel):
     bpy.types.Scene.display_limit = IntProperty(name="Display limit",
                                                 description="Maximum number of items to list",
                                                 default=5, min=2, max=20)
+    bpy.types.Scene.triscount_render = BoolProperty(name="Count Render",
+                                                    description="Tris count render or preview",
+                                                    default = False)
 
     @classmethod
     def poll(cls, context):
@@ -53,6 +56,8 @@ class TrisCountUI(bpy.types.Panel):
         row = layout.row()
         row.prop(scene, "display_limit")
         row = layout.row()
+        row.prop(scene, "triscount_render")
+        row = layout.row()
         if len(objs) == 1:
             row.label(text="1 Objects selected", icon='OBJECT_DATA')
         else:
@@ -69,7 +74,7 @@ class TrisCountUI(bpy.types.Panel):
             sum_tris, sum_modtris = 0, 0
             for o in objs:
                 bm = bmesh.new()
-                bm.from_object(object=o, scene=scene, deform=True, render=True)
+                bm.from_object(object=o, scene=scene, deform=True, render=scene.triscount_render)
                 tris = 0
                 for p in o.data.polygons:
                     tris += len(p.vertices) - 2
