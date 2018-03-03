@@ -38,7 +38,7 @@ class TrisCountUI(bpy.types.Panel):
                                                 default=5, min=2, max=20)
     bpy.types.Scene.triscount_render = BoolProperty(name="Count Render",
                                                     description="Tris count render or preview",
-                                                    default = False)
+                                                    default=False)
 
     @classmethod
     def poll(cls, context):
