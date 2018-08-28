@@ -5,9 +5,8 @@ from mathutils import Vector, Matrix
 bl_info = {
     "name": "Extrud Bay Distance",
     "location": "View3D > Add > Mesh > Extrud Bay Distance",
-    "description": "chet",
     "author": "Nedovizin Alexander, Vladislav Kindushov",
-    "version": (0, 2),
+    "version": (1, 0),
     "blender": (2, 7, 9),
     "category": "Mesh",
 }
@@ -35,20 +34,23 @@ class ExtrudBayDistance(bpy.types.Operator):
                 bpy.ops.mesh.dupli_extrude_cursor('INVOKE_DEFAULT', rotate_source=False)
                 self.main_position = bpy.context.scene.cursor_location.copy()
 
-        if event.type == 'LEFTMOUSE' and self.is_set_dist:
-            self.is_set_dist = False
-            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
+        if event.type == 'LEFTMOUSE' and event.value == 'PRESS':
+            if self.is_set_dist:
+                self.is_set_dist = False
+            else:
+                self.dist = 0
+                self.is_set_dist = True
+
         elif event.type == 'RIGHTMOUSE':
-            try:
+            if self.is_set_dist:
+                self.main_position = bpy.context.scene.cursor_location.copy()
+                self.dist = 0
+                return {'PASS_THROUGH'}
+            else:
                 bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
-            except:
-                pass
-            return {'FINISHED'}
+                return {'FINISHED'}
         elif event.type in {'ESC'}:
-            try:
-                bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
-            except:
-                pass
+            bpy.types.SpaceView3D.draw_handler_remove(self._handle, 'WINDOW')
             return {'CANCELLED'}
         return {'RUNNING_MODAL'}
 
@@ -66,17 +68,27 @@ class ExtrudBayDistance(bpy.types.Operator):
         context.window_manager.modal_handler_add(self)
         return {'RUNNING_MODAL'}
 
+    @property
+    def view(self):
+        """ Returns the set of 3D views.
+        """
+        if bpy.context.area.type == 'VIEW_3D':
+            return bpy.context.area
+        else:
+            for area in bpy.context.window.screen.areas:
+                if area.type == 'VIEW_3D':
+                    return area
+        return None
+
 
 def draw_radius(self):
+    if not self.is_set_dist:
+        return
+
     number_sides = int(self.dist * 20) + 10
     angle_step = 2 * math.pi / number_sides
     data_verts = []
-
-    vec_nativ = Vector((1, 0, 0))
-    v1 = bpy.context.scene.cursor_location.copy()
-    v2 = self.main_position
-    vec_to = (v1 - v2).normalized()
-    q_rot = vec_to.rotation_difference(vec_nativ).to_matrix().to_4x4()
+    q_rot = self.view.spaces[0].region_3d.view_matrix
 
     for ns in range(number_sides):
         angle = angle_step * ns
