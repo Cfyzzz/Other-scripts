@@ -22,7 +22,7 @@ bl_info = {
     "name": "F2",
     "author": "Bart Crouch, Alexander Nedovizin, Paul Kotelevets "
               "(concept design), Adrian Rutkowski",
-    "version": (1, 8, 2, 1),
+    "version": (1, 8, 3),
     "blender": (2, 78, 0),
     "location": "Editmode > F",
     "warning": "",
@@ -552,16 +552,7 @@ class MeshF2(bpy.types.Operator):
                 bpy.ops.mesh.edge_face_add('INVOKE_DEFAULT')
                 addon_prefs = context.user_preferences.addons[__name__].preferences
                 if addon_prefs.ngons_v_mat:
-                    bpy.ops.editmode_toggle()
-                    bpy.ops.editmode_toggle()
-                    bpy.ops.mesh.select_mode(type='FACE')
-                    bm = bmesh.from_edit_mesh(context.active_object.data)
-                    mat_index = bpy.context.object.active_material_index
-                    if mat_index >= 0:
-                        face = bm.faces.active
-                        if face:
-                            face.material_index = mat_index
-                    bpy.ops.mesh.select_mode(type='VERT')
+                    bpy.ops.object.material_slot_assign()
             except:
                 return {'CANCELLED'}
         elif len(sel) == 1:
