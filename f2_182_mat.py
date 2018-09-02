@@ -501,6 +501,10 @@ class F2AddonPreferences(bpy.types.AddonPreferences):
         name="Tris From Vert",
         description="Use active material for created face instead of close one",
         default=True)
+    ngons_v_mat = bpy.props.BoolProperty(
+        name="Ngons",
+        description="Use active material for created face instead of close one",
+        default=True)
 
     def draw(self, context):
         layout = self.layout
@@ -516,6 +520,7 @@ class F2AddonPreferences(bpy.types.AddonPreferences):
         col.prop(self, "quad_from_e_mat")
         col.prop(self, "quad_from_v_mat")
         col.prop(self, "tris_from_v_mat")
+        col.prop(self, "ngons_v_mat")
 
 
 class MeshF2(bpy.types.Operator):
@@ -545,6 +550,18 @@ class MeshF2(bpy.types.Operator):
             # original 'Make Edge/Face' behaviour
             try:
                 bpy.ops.mesh.edge_face_add('INVOKE_DEFAULT')
+                addon_prefs = context.user_preferences.addons[__name__].preferences
+                if addon_prefs.ngons_v_mat:
+                    bpy.ops.editmode_toggle()
+                    bpy.ops.editmode_toggle()
+                    bpy.ops.mesh.select_mode(type='FACE')
+                    bm = bmesh.from_edit_mesh(context.active_object.data)
+                    mat_index = bpy.context.object.active_material_index
+                    if mat_index >= 0:
+                        face = bm.faces.active
+                        if face:
+                            face.material_index = mat_index
+                    bpy.ops.mesh.select_mode(type='VERT')
             except:
                 return {'CANCELLED'}
         elif len(sel) == 1:
