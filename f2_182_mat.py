@@ -22,7 +22,7 @@ bl_info = {
     "name": "F2",
     "author": "Bart Crouch, Alexander Nedovizin, Paul Kotelevets "
               "(concept design), Adrian Rutkowski",
-    "version": (1, 8, 2),
+    "version": (1, 8, 2, 1),
     "blender": (2, 78, 0),
     "location": "Editmode > F",
     "warning": "",
