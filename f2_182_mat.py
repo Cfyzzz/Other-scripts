@@ -144,11 +144,11 @@ def quad_from_edge(bm, edge_sel, context, event):
         mat_index = False
         smooth = False
     else:
-        if addon_prefs.quad_from_e_mat:
-            mat_index = bpy.context.object.active_material_index
-        else:
-            mat_index = ref_faces[0].material_index
+        mat_index = ref_faces[0].material_index
         smooth = ref_faces[0].smooth
+
+    if addon_prefs.quad_from_e_mat:
+        mat_index = bpy.context.object.active_material_index
 
     # create quad
     try:
@@ -262,11 +262,11 @@ def quad_from_vertex(bm, vert_sel, context, event):
         mat_index = False
         smooth = False
     else:
-        if addon_prefs.quad_from_v_mat:
-            mat_index = bpy.context.object.active_material_index
-        else:
-            mat_index = ref_faces[0].material_index
+        mat_index = ref_faces[0].material_index
         smooth = ref_faces[0].smooth
+
+    if addon_prefs.quad_from_v_mat:
+        mat_index = bpy.context.object.active_material_index
 
     # create face between all 4 vertices involved
     verts = [other_verts[0], vert_sel, other_verts[1], vert_new]
