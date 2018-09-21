@@ -22,7 +22,7 @@ bl_info = {
     "name": "F2",
     "author": "Bart Crouch, Alexander Nedovizin, Paul Kotelevets "
               "(concept design), Adrian Rutkowski",
-    "version": (1, 8, 3),
+    "version": (1, 8, 4),
     "blender": (2, 78, 0),
     "location": "Editmode > F",
     "warning": "",
@@ -480,15 +480,15 @@ class F2AddonPreferences(bpy.types.AddonPreferences):
     adjustuv = bpy.props.BoolProperty(
         name="Adjust UV",
         description="Automatically update UV unwrapping",
-        default=True)
+        default=False)
     autograb = bpy.props.BoolProperty(
         name="Auto Grab",
         description="Automatically puts a newly created vertex in grab mode",
-        default=False)
+        default=True)
     extendvert = bpy.props.BoolProperty(
         name="Enable Extend Vert",
         description="Anables a way to build tris and quads by adding verts",
-        default=True)
+        default=False)
     quad_from_e_mat = bpy.props.BoolProperty(
         name="Quad From Edge",
         description="Use active material for created face instead of close one",
