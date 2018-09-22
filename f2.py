@@ -32,6 +32,8 @@ bl_info = {
     "category": "Mesh",
 }
 
+# ref: https://github.com/Cfyzzz/Other-scripts/blob/master/f2.py
+
 import bmesh
 import bpy
 import itertools
