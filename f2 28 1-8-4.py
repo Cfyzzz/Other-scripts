@@ -44,6 +44,9 @@ import math
 from mathutils import Vector
 from bpy_extras import view3d_utils
 
+from numpy import array, cross, abs
+from numpy.linalg import norm
+
 
 # returns a custom data layer of the UV map, or None
 def get_uv_layer(ob, bm, mat_index):
@@ -334,20 +337,35 @@ def expand_vert(self, context, event):
     bm = bmesh.from_edit_mesh(me)
     region = context.region
     region_3d = context.space_data.region_3d
-    rv3d = context.space_data.region_3d
 
     for v in bm.verts:
         if v.select:
             v_active = v
 
-    try:
-        depth_location = v_active.co
-    except:
-        return {'CANCELLED'}
+    # check if use rip or create new face
+
+    lactive = v_active.link_faces
+    lverts = lactive[0].verts
+
+    mat_index = lactive[0].material_index
+    smooth = lactive[0].smooth
+
+    for faces in lactive:
+        cface = faces
+        if len(faces.verts) == 3:
+            bm.normal_update()
+            bmesh.update_edit_mesh(obj.data)
+            bpy.ops.mesh.select_all(action='DESELECT')
+            v_active.select = True
+            bpy.ops.mesh.rip_edge_move('INVOKE_DEFAULT')
+            return {'FINISHED'}
+
+    lverts = cface.verts
+
     # create vert in mouse cursor location
 
     mouse_pos = Vector((event.mouse_region_x, event.mouse_region_y))
-    location_3d = view3d_utils.region_2d_to_location_3d(region, rv3d, mouse_pos, depth_location)
+    # location_3d = view3d_utils.region_2d_to_location_3d(region, rv3d, mouse_pos, depth_location)
 
     c_verts = []
     # find and select linked edges that are open (<2 faces connected) add those edge verts to c_verts list
@@ -367,82 +385,83 @@ def expand_vert(self, context, event):
     screen_pos_v2 = view3d_utils.location_3d_to_region_2d(region, region_3d,
                                                           ob.matrix_world @ c_verts[1].co)
 
-    mid_pos_v1 = Vector(((screen_pos_va[0] + screen_pos_v1[0]) / 2, (screen_pos_va[1] + screen_pos_v1[1]) / 2))
-    mid_pos_V2 = Vector(((screen_pos_va[0] + screen_pos_v2[0]) / 2, (screen_pos_va[1] + screen_pos_v2[1]) / 2))
+    va_array = array([screen_pos_va[0], screen_pos_va[1]])
+    v1_array = array([screen_pos_v1[0], screen_pos_v1[1]])
+    v2_array = array([screen_pos_v2[0], screen_pos_v2[1]])
+    mp_array = array([mouse_pos[0], mouse_pos[1]])
 
-    dist1 = math.log10(pow((mid_pos_v1[0] - mouse_pos[0]), 2) + pow((mid_pos_v1[1] - mouse_pos[1]), 2))
-    dist2 = math.log10(pow((mid_pos_V2[0] - mouse_pos[0]), 2) + pow((mid_pos_V2[1] - mouse_pos[1]), 2))
+    dist1 = abs(norm(cross(va_array - v1_array, v1_array - mp_array)) / norm(va_array - v1_array))
+    dist2 = abs(norm(cross(va_array - v2_array, v2_array - mp_array)) / norm(va_array - v2_array))
+
+    dist3 = pointfromline(screen_pos_va[0], screen_pos_va[1], screen_pos_v1[0], screen_pos_v1[1], mouse_pos[0], mouse_pos[1])
+    dist4 = pointfromline(screen_pos_va[0], screen_pos_va[1], screen_pos_v2[0], screen_pos_v2[1], mouse_pos[0], mouse_pos[1])
 
     bm.normal_update()
     bm.verts.ensure_lookup_table()
 
-    # Deselect not needed point and create new face
-    if dist1 < dist2:
+    # Deselect not needed point
+
+    if (dist3 < dist4):
         c_verts[1].select = False
-        lleft = c_verts[0].link_faces
-
-    else:
+    elif (dist3 > dist4):
         c_verts[0].select = False
-        lleft = c_verts[1].link_faces
-
-    lactive = v_active.link_faces
-    # lverts = lactive[0].verts
-
-    mat_index = lactive[0].material_index
-    smooth = lactive[0].smooth
-
-    for faces in lactive:
-        if faces in lleft:
-            cface = faces
-            if len(faces.verts) == 3:
-                bm.normal_update()
-                bmesh.update_edit_mesh(obj.data)
-                bpy.ops.mesh.select_all(action='DESELECT')
-                v_active.select = True
-                bpy.ops.mesh.rip_edge_move('INVOKE_DEFAULT')
-                return {'FINISHED'}
-
-    lverts = cface.verts
-
-    # create triangle with correct normal orientation
-    # if You looking at that part - yeah... I know. I still dont get how blender calculates normals...
-
+    else:
+        if (dist1 < dist2):
+            c_verts[1].select = False
+        elif (dist1 > dist2):
+            c_verts[0].select = False
+        else:
+            pass
+    # creates triangle with correct normal orientation
     # from L to R
-    if dist1 < dist2:
-        if (lverts[0] == v_active and lverts[3] == c_verts[0]) \
-                or (lverts[2] == v_active and lverts[1] == c_verts[0]) \
-                or (lverts[1] == v_active and lverts[0] == c_verts[0]) \
-                or (lverts[3] == v_active and lverts[2] == c_verts[0]):
-            v_new = bm.verts.new(v_active.co)
+    new_faces = []
+    v_new = bm.verts.new(v_active.co)
+
+    if (lverts[0] == v_active and lverts[3] == c_verts[0]) \
+    or (lverts[1] == v_active and lverts[0] == c_verts[0]) \
+    or (lverts[2] == v_active and lverts[1] == c_verts[0]) \
+    or (lverts[3] == v_active and lverts[2] == c_verts[0]):
+        # from L to R
+        if dist3 < dist4:
+            face_new = bm.faces.new((v_active, c_verts[0], v_new))
+        # from R to L
+        elif dist3 > dist4:
+            face_new = bm.faces.new((v_active, v_new, c_verts[1]))
+        else:
+            if (dist1 > dist2):
+                face_new = bm.faces.new((v_active, c_verts[0], v_new))
+            else:
+                face_new = bm.faces.new((v_active, v_new, c_verts[1]))
+
+    elif (lverts[0] == v_active and lverts[1] == c_verts[1]) \
+    or (lverts[1] == v_active and lverts[2] == c_verts[1]) \
+    or (lverts[2] == v_active and lverts[3] == c_verts[1]) \
+    or (lverts[3] == v_active and lverts[0] == c_verts[1]):
+        if dist3 < dist4:
             face_new = bm.faces.new((c_verts[0], v_new, v_active))
 
-        elif (lverts[1] == v_active and lverts[2] == c_verts[0]) \
-                or (lverts[0] == v_active and lverts[1] == c_verts[0]) \
-                or (lverts[3] == v_active and lverts[0] == c_verts[0]) \
-                or (lverts[2] == v_active and lverts[3] == c_verts[0]):
-            v_new = bm.verts.new(v_active.co)
+        elif dist3 > dist4:
+            face_new = bm.faces.new((c_verts[1], v_active, v_new))
+        else:
+            if (dist1 > dist2):
+                face_new = bm.faces.new((v_active, v_new, c_verts[0]))
+            else:
+                face_new = bm.faces.new((v_active, c_verts[1], v_new))
+
+    else:
+        if dist3 < dist4:
             face_new = bm.faces.new((v_active, v_new, c_verts[0]))
 
+        elif dist3 > dist4:
+            face_new = bm.faces.new((v_active, c_verts[1], v_new))
         else:
-            pass
-    # from R to L
-    else:
-        if (lverts[2] == v_active and lverts[3] == c_verts[1]) \
-                or (lverts[0] == v_active and lverts[1] == c_verts[1]) \
-                or (lverts[1] == v_active and lverts[2] == c_verts[1]) \
-                or (lverts[3] == v_active and lverts[0] == c_verts[1]):
-            v_new = bm.verts.new(v_active.co)
-            face_new = bm.faces.new((v_active, v_new, c_verts[1]))
+            if (dist1 > dist2):
+                face_new = bm.faces.new((v_active, v_new, c_verts[0]))
+            else:
+                face_new = bm.faces.new((v_active, c_verts[1], v_new))
 
-        elif (lverts[0] == v_active and lverts[3] == c_verts[1]) \
-                or (lverts[2] == v_active and lverts[1] == c_verts[1]) \
-                or (lverts[1] == v_active and lverts[0] == c_verts[1]) \
-                or (lverts[3] == v_active and lverts[2] == c_verts[1]):
-            v_new = bm.verts.new(v_active.co)
-            face_new = bm.faces.new((c_verts[1], v_new, v_active))
-
-        else:
-            pass
+    new_faces.append(face_new)
+    bm.faces.index_update()
 
     # set smooth and mat based on starting face
     if addon_prefs.tris_from_v_mat:
@@ -459,6 +478,40 @@ def expand_vert(self, context, event):
     bm.normal_update()
     bmesh.update_edit_mesh(obj.data)
     bpy.ops.transform.translate('INVOKE_DEFAULT')
+
+
+def pointfromline(x1, y1, x2, y2, x3, y3):
+    px = x2 - x1
+    py = y2 - y1
+
+    something = px * px + py * py
+
+    if something == 0:
+        return True
+
+    u = ((x3 - x1) * px + (y3 - y1) * py) / float(something)
+
+    if u > 1:
+        u = 1
+    elif u < 0:
+        u = 0
+
+    x = x1 + u * px
+    y = y1 + u * py
+
+    dx = x - x3
+    dy = y - y3
+
+    # Note: If the actual distance does not matter,
+    # if you only want to compare what this function
+    # returns to other results of this function, you
+    # can just return the squared distance instead
+    # (i.e. remove the sqrt) to gain a little performance
+    # dist = math.sqrt(dx*dx + dy*dy)
+
+    dist = (dx * dx + dy * dy)
+
+    return dist
 
 
 def checkforconnected(conection):
