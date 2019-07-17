@@ -34,37 +34,31 @@ bl_info = {
     "category": "Mesh",
 }
 
-# ref: https://github.com/Cfyzzz/Other-scripts/blob/master/f2.py
+# https://developer.blender.org/rBAef5f9c3291ffec316e1d0a380ca2357351104a8d
+# https://developer.blender.org/rBA812d1c1ec3f3fa0b20e52759ea989f036345228b
+
+
+# ref: https://github.com/Cfyzzz/Other-scripts/blob/master/f2 28 1-8-4.py
+
+import itertools
 
 import bmesh
 import bpy
-import itertools
-import mathutils
 import math
-from mathutils import Vector
+import mathutils
 from bpy_extras import view3d_utils
+from mathutils import Vector
 
 
 # returns a custom data layer of the UV map, or None
-def get_uv_layer(ob, bm, mat_index):
+def get_uv_layer(ob, bm):
     uv = None
     uv_layer = None
     if ob.material_slots:
         me = ob.data
         if me.uv_layers:
             uv = me.uv_layers.active.name
-    # 'material_slots' is deprecated (Blender Internal)
-    # else:
-    #     mat = ob.material_slots[mat_index].material
-    #     if mat is not None:
-    #         slot = mat.texture_slots[mat.active_texture_index]
-    #         if slot and slot.uv_layer:
-    #             uv = slot.uv_layer
-    #         else:
-    #             for tex_slot in mat.texture_slots:
-    #                 if tex_slot and tex_slot.uv_layer:
-    #                     uv = tex_slot.uv_layer
-    #                     break
+
     if uv:
         uv_layer = bm.loops.layers.uv.get(uv)
 
@@ -80,9 +74,9 @@ def quad_from_edge(bm, edge_sel, context, event):
 
     # find linked edges that are open (<2 faces connected) and not part of
     # the face the selected edge belongs to
-    all_edges = [[edge for edge in edge_sel.verts[i].link_edges if \
-                  len(edge.link_faces) < 2 and edge != edge_sel and \
-                  sum([face in edge_sel.link_faces for face in edge.link_faces]) == 0] \
+    all_edges = [[edge for edge in edge_sel.verts[i].link_edges if
+                  len(edge.link_faces) < 2 and edge != edge_sel and
+                  sum([face in edge_sel.link_faces for face in edge.link_faces]) == 0]
                  for i in range(2)]
     if not all_edges[0] or not all_edges[1]:
         return
@@ -95,8 +89,7 @@ def quad_from_edge(bm, edge_sel, context, event):
         for edge in edges:
             vert = [vert for vert in edge.verts if not vert.select][0]
             world_pos = ob.matrix_world @ vert.co.copy()
-            screen_pos = view3d_utils.location_3d_to_region_2d(region,
-                                                               region_3d, world_pos)
+            screen_pos = view3d_utils.location_3d_to_region_2d(region, region_3d, world_pos)
             dist = (mouse_pos - screen_pos).length
             if not min_dist or dist < min_dist[0]:
                 min_dist = (dist, edge, vert)
@@ -186,7 +179,7 @@ def quad_from_edge(bm, edge_sel, context, event):
     # adjust uv-map
     if __name__ != '__main__':
         if addon_prefs.adjustuv:
-            uv_layer = get_uv_layer(ob, bm, mat_index)
+            uv_layer = get_uv_layer(ob, bm)
             if uv_layer:
                 uv_ori = {}
                 for vert in [v1, v2, v3, v4]:
@@ -206,7 +199,6 @@ def quad_from_edge(bm, edge_sel, context, event):
 def quad_from_vertex(bm, vert_sel, context, event):
     addon_prefs = context.preferences.addons[__name__].preferences
     ob = context.active_object
-    me = ob.data
     region = context.region
     region_3d = context.space_data.region_3d
 
@@ -219,14 +211,11 @@ def quad_from_vertex(bm, vert_sel, context, event):
     min_dist = False
     mouse_pos = mathutils.Vector([event.mouse_region_x, event.mouse_region_y])
     for a, b in itertools.combinations(edges, 2):
-        other_verts = [vert for edge in [a, b] for vert in edge.verts \
-                       if not vert.select]
-        mid_other = (other_verts[0].co.copy() + other_verts[1].co.copy()) \
-                    / 2
+        other_verts = [vert for edge in [a, b] for vert in edge.verts if not vert.select]
+        mid_other = (other_verts[0].co.copy() + other_verts[1].co.copy()) / 2
         new_pos = 2 * (mid_other - vert_sel.co.copy()) + vert_sel.co.copy()
         world_pos = ob.matrix_world @ new_pos
-        screen_pos = view3d_utils.location_3d_to_region_2d(region, region_3d,
-                                                           world_pos)
+        screen_pos = view3d_utils.location_3d_to_region_2d(region, region_3d, world_pos)
         dist = (mouse_pos - screen_pos).length
         if not min_dist or dist < min_dist[0]:
             min_dist = (dist, (a, b), other_verts, new_pos)
@@ -289,7 +278,7 @@ def quad_from_vertex(bm, vert_sel, context, event):
     # adjust uv-map
     if __name__ != '__main__':
         if addon_prefs.adjustuv:
-            uv_layer = get_uv_layer(ob, bm, mat_index)
+            uv_layer = get_uv_layer(ob, bm)
             if uv_layer:
                 uv_others = {}
                 uv_sel = None
@@ -347,8 +336,6 @@ def expand_vert(self, context, event):
     # create vert in mouse cursor location
 
     mouse_pos = Vector((event.mouse_region_x, event.mouse_region_y))
-    location_3d = view3d_utils.region_2d_to_location_3d(region, rv3d, mouse_pos, depth_location)
-
     c_verts = []
     # find and select linked edges that are open (<2 faces connected) add those edge verts to c_verts list
     linked = v_active.link_edges
@@ -386,7 +373,6 @@ def expand_vert(self, context, event):
         lleft = c_verts[1].link_faces
 
     lactive = v_active.link_faces
-    # lverts = lactive[0].verts
 
     mat_index = lactive[0].material_index
     smooth = lactive[0].smooth
@@ -423,8 +409,6 @@ def expand_vert(self, context, event):
             v_new = bm.verts.new(v_active.co)
             face_new = bm.faces.new((v_active, v_new, c_verts[0]))
 
-        else:
-            pass
     # from R to L
     else:
         if (lverts[2] == v_active and lverts[3] == c_verts[1]) \
@@ -440,9 +424,6 @@ def expand_vert(self, context, event):
                 or (lverts[3] == v_active and lverts[2] == c_verts[1]):
             v_new = bm.verts.new(v_active.co)
             face_new = bm.faces.new((c_verts[1], v_new, v_active))
-
-        else:
-            pass
 
     # set smooth and mat based on starting face
     if addon_prefs.tris_from_v_mat:
@@ -482,31 +463,31 @@ def checkforconnected(conection):
 # autograb preference in addons panel
 class F2AddonPreferences(bpy.types.AddonPreferences):
     bl_idname = __name__
-    adjustuv : bpy.props.BoolProperty(
+    adjustuv: bpy.props.BoolProperty(
         name="Adjust UV",
         description="Automatically update UV unwrapping",
         default=False)
-    autograb : bpy.props.BoolProperty(
+    autograb: bpy.props.BoolProperty(
         name="Auto Grab",
         description="Automatically puts a newly created vertex in grab mode",
         default=True)
-    extendvert : bpy.props.BoolProperty(
+    extendvert: bpy.props.BoolProperty(
         name="Enable Extend Vert",
         description="Anables a way to build tris and quads by adding verts",
         default=False)
-    quad_from_e_mat : bpy.props.BoolProperty(
+    quad_from_e_mat: bpy.props.BoolProperty(
         name="Quad From Edge",
         description="Use active material for created face instead of close one",
         default=True)
-    quad_from_v_mat : bpy.props.BoolProperty(
+    quad_from_v_mat: bpy.props.BoolProperty(
         name="Quad From Vert",
         description="Use active material for created face instead of close one",
         default=True)
-    tris_from_v_mat : bpy.props.BoolProperty(
+    tris_from_v_mat: bpy.props.BoolProperty(
         name="Tris From Vert",
         description="Use active material for created face instead of close one",
         default=True)
-    ngons_v_mat : bpy.props.BoolProperty(
+    ngons_v_mat: bpy.props.BoolProperty(
         name="Ngons",
         description="Use active material for created face instead of close one",
         default=True)
