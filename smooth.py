@@ -1,10 +1,11 @@
 import simple_draw as sd
-from splines import main_spline
+from splines import test_resolve
 
 
 EMPTY_MODE = 0
 START_MODE = 1
 GET_POS_MOD = 2
+LEFT_CLICK = 3
 
 mode = EMPTY_MODE
 
@@ -103,7 +104,7 @@ def clear_screen():
 
 def test_main_spline(points):
     def wrap():
-        main_spline(points)
+        test_resolve(points)
         print("click!")
     return wrap
 
@@ -113,7 +114,7 @@ if __name__ == "__main__":
     figure = Figure()
     user_interface = UserInterface()
     user_interface.add_button(10, 10, "+", event=test_main_spline(figure.points)).set_size(30, 60)
-    user_interface.add_button(80, 10, "-").set_size(30, 60)
+    # user_interface.add_button(80, 10, "-").set_size(30, 60)
     while True:
         mouse_pos, mouse_buttons = sd.get_mouse_state()
         point = mouse_pos
@@ -129,21 +130,10 @@ if __name__ == "__main__":
 
         elif mouse_buttons[0] == 1 and mode == EMPTY_MODE:
             cursor_pos = mouse_pos
-            # mode = START_MODE
+            mode = LEFT_CLICK
 
-        # elif mouse_buttons[0] == 0 and mode == START_MODE:
-        #     mode = EMPTY_MODE
-
-        # elif mouse_buttons[2] == 1 and mode == EMPTY_MODE:
-        #     print("2")
-        #     mode = GET_POS_MOD
-        #
-        # elif mouse_buttons[2] == 1 and mode == GET_POS_MOD:
-        #     print("3")
-        #
-        # elif mouse_buttons[2] == 0 and mode == GET_POS_MOD:
-        #     print("4")
-        #     mode = EMPTY_MODE
+        elif mouse_buttons[0] == 0 and mode == LEFT_CLICK:
+            mode = EMPTY_MODE
 
         sd.start_drawing()
         clear_screen()
