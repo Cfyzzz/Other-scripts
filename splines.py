@@ -29,21 +29,11 @@ class Segment:
         b.y = nt2 * self.points[0].y + 2 * t * nt * self.points[1].y + t2 * self.points[2].y
 
 
-def find_all_segments(verts, min_vts=3):
-    if len(verts) < min_vts:
-        return []
-
-    segments = []
-    for idx, vert in enumerate(verts[:-1]):
-        segments.append([vert, verts[idx + 1]])
-    return segments
-
-
 def copy(p: sd.Point) -> sd.Point:
     return sd.Point(p.x, p.y)
 
 
-def loopResolve(verts, STEP, dist=None):
+def loopResolve(verts, step, dist=None):
     def getTBSegment(segment, Pc, T, R, D):
         kk = (1 - T) * 0.5
         t = kk + T
@@ -112,7 +102,7 @@ def loopResolve(verts, STEP, dist=None):
         n = len(values) - 1
         bezier = [Segment() for _ in range(n)]
 
-        step_ = STEP - 1
+        step_ = step - 1
         new_vts = []
 
         if not dist:
@@ -142,14 +132,12 @@ def loopResolve(verts, STEP, dist=None):
             Pc = copy(segment.points[0])
             t = 0
             i = 0
-            ii = 0
             iii = 0
             pi_ = 0
             i_virtual = 0
             dr = 0
             old_point = copy(extreme_vs[0])
             while i < len(bezier):
-                ii += 1
                 segment = bezier[i]
                 if i == len(bezier) - 1:
                     pi_ = 1
@@ -211,7 +199,3 @@ def loopResolve(verts, STEP, dist=None):
 def length_line(a, b):
     """Длина линии между двумя точками"""
     return ((a.x - b.x) ** 2 + (a.y - b.y) ** 2) ** 0.5
-
-
-def test_resolve(verts):
-    loopResolve(verts=verts, STEP=100)

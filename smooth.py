@@ -1,6 +1,5 @@
 import simple_draw as sd
-from splines import test_resolve
-
+from splines import loopResolve
 
 EMPTY_MODE = 0
 START_MODE = 1
@@ -8,6 +7,7 @@ GET_POS_MOD = 2
 LEFT_CLICK = 3
 
 mode = EMPTY_MODE
+
 
 sd.caption = "Интерполяция"
 
@@ -78,10 +78,10 @@ class Figure:
     def __init__(self):
         self.points = []
         self.radius = 4
+        self.figure_resolution = 10
 
     def append(self, point: sd.Point):
         self.points.append(point)
-        # print(*([p.x, p.y] for p in self.points))
 
     def draw(self):
         if not self.points:
@@ -102,10 +102,39 @@ def clear_screen():
     sd.rectangle(left_bottom=sd.get_point(0, 0), right_top=sd.get_point(*sd.resolution), color=sd.background_color)
 
 
-def test_main_spline(points):
+def test_main_spline(figure):
     def wrap():
-        test_resolve(points)
-        print("click!")
+        loopResolve(verts=figure.points, step=0, dist=figure.figure_resolution)
+    return wrap
+
+
+def clear(figure):
+    def wrap():
+        figure.points = []
+    return wrap
+
+
+def resolution_minus(figure):
+    def wrap():
+        figure.figure_resolution += 10
+        loopResolve(verts=figure.points, step=0, dist=figure.figure_resolution)
+    return wrap
+
+
+def resolution_plus(figure):
+    def wrap():
+        figure.figure_resolution -= 10
+        figure.figure_resolution = max(10, figure.figure_resolution)
+        loopResolve(verts=figure.points, step=0, dist=figure.figure_resolution)
+    return wrap
+
+
+def flip_radius(figure):
+    def wrap():
+        if figure.radius == 0:
+            figure.radius = 4
+        else:
+            figure.radius = 0
     return wrap
 
 
@@ -113,8 +142,11 @@ if __name__ == "__main__":
     sd._init()
     figure = Figure()
     user_interface = UserInterface()
-    user_interface.add_button(10, 10, "+", event=test_main_spline(figure.points)).set_size(30, 60)
-    # user_interface.add_button(80, 10, "-").set_size(30, 60)
+    user_interface.add_button(10, 10, "+", event=test_main_spline(figure)).set_size(30, 60)
+    user_interface.add_button(80, 10, "-", event=clear(figure)).set_size(30, 60)
+    user_interface.add_button(160, 10, "-", event=resolution_plus(figure)).set_size(30, 30)
+    user_interface.add_button(200, 10, "-", event=resolution_minus(figure)).set_size(30, 30)
+    user_interface.add_button(250, 10, "-", event=flip_radius(figure)).set_size(30, 60)
     while True:
         mouse_pos, mouse_buttons = sd.get_mouse_state()
         point = mouse_pos
@@ -122,17 +154,16 @@ if __name__ == "__main__":
 
         if mouse_buttons[2] == 1 and mode == EMPTY_MODE:
             figure.append(point)
-            print(len(figure.points))
             mode = START_MODE
 
         elif mouse_buttons[2] == 0 and mode == START_MODE:
             mode = EMPTY_MODE
 
         elif mouse_buttons[0] == 1 and mode == EMPTY_MODE:
-            cursor_pos = mouse_pos
             mode = LEFT_CLICK
 
         elif mouse_buttons[0] == 0 and mode == LEFT_CLICK:
+            cursor_pos = mouse_pos
             mode = EMPTY_MODE
 
         sd.start_drawing()
