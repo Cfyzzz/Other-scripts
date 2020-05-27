@@ -1,4 +1,5 @@
 import simple_draw as sd
+import pygame
 from splines import loopResolve
 
 EMPTY_MODE = 0
@@ -7,7 +8,6 @@ GET_POS_MOD = 2
 LEFT_CLICK = 3
 
 mode = EMPTY_MODE
-
 
 sd.caption = "Интерполяция"
 
@@ -23,7 +23,7 @@ class Button:
         self._height = 10
         self._width = 30
 
-    def set_size(self, height, width):
+    def set_size(self, width, height):
         self._height = height
         self._width = width
         return self
@@ -48,7 +48,15 @@ class Button:
                      right_top=sd.get_point(self.x + self._width, self.y + self._height),
                      color=color2,
                      width=2)
-        # TODO - Вывести caption по середине кнопки и с нужной высотой шрифта
+        self._draw_text_on_button()
+
+    def _draw_text_on_button(self):
+        # pygame.font.init()
+        myfont = pygame.font.SysFont('Comic Sans MS', int(self._height * 0.8))
+        textsurface = myfont.render(self.caption, False, (0, 0, 0))
+        sd._screen.blit(textsurface,
+                        (self.x + (self._width - textsurface.get_width()) // 2,
+                         sd.resolution[1] - self.y + (self._height - textsurface.get_height()) // 2 - self._height))
 
     def check_over(self, cursor_pos):
         return (not cursor_pos is None
@@ -66,11 +74,11 @@ class UserInterface:
         self.buttons.append(new_button)
         return new_button
 
-    def show(self, cursor_pos):
+    def show(self, cursor_pos, is_click=False):
         for button in self.buttons:
             is_over = button.check_over(cursor_pos)
             button.draw(is_over)
-            if is_over:
+            if is_over and is_click:
                 button._event()
 
 
@@ -103,54 +111,54 @@ def clear_screen():
 
 
 def test_main_spline(figure):
-    def wrap():
+    def wrap_test_main_spline():
         loopResolve(verts=figure.points, step=0, dist=figure.figure_resolution)
-    return wrap
+    return wrap_test_main_spline
 
 
 def clear(figure):
-    def wrap():
+    def wrap_clear():
         figure.points = []
-    return wrap
+    return wrap_clear
 
 
 def resolution_minus(figure):
-    def wrap():
+    def wrap_resolution_minus():
         figure.figure_resolution += 10
         loopResolve(verts=figure.points, step=0, dist=figure.figure_resolution)
-    return wrap
+    return wrap_resolution_minus
 
 
 def resolution_plus(figure):
-    def wrap():
+    def wrap_resolution_plus():
         figure.figure_resolution -= 10
         figure.figure_resolution = max(10, figure.figure_resolution)
         loopResolve(verts=figure.points, step=0, dist=figure.figure_resolution)
-    return wrap
+    return wrap_resolution_plus
 
 
 def flip_radius(figure):
-    def wrap():
+    def wrap_flip_radius():
         if figure.radius == 0:
             figure.radius = 4
         else:
             figure.radius = 0
-    return wrap
+    return wrap_flip_radius
 
 
 if __name__ == "__main__":
     sd._init()
     figure = Figure()
     user_interface = UserInterface()
-    user_interface.add_button(10, 10, "+", event=test_main_spline(figure)).set_size(30, 60)
-    user_interface.add_button(80, 10, "-", event=clear(figure)).set_size(30, 60)
-    user_interface.add_button(160, 10, "-", event=resolution_plus(figure)).set_size(30, 30)
-    user_interface.add_button(200, 10, "-", event=resolution_minus(figure)).set_size(30, 30)
-    user_interface.add_button(250, 10, "-", event=flip_radius(figure)).set_size(30, 60)
+    user_interface.add_button(10, 10, "run", event=test_main_spline(figure)).set_size(60, 30)
+    user_interface.add_button(80, 10, "clear", event=clear(figure)).set_size(80, 30)
+    user_interface.add_button(180, 10, "+", event=resolution_plus(figure)).set_size(30, 30)
+    user_interface.add_button(220, 10, "-", event=resolution_minus(figure)).set_size(30, 30)
+    user_interface.add_button(270, 10, "point", event=flip_radius(figure)).set_size(60, 30)
     while True:
         mouse_pos, mouse_buttons = sd.get_mouse_state()
         point = mouse_pos
-        cursor_pos = None
+        on_click = False
 
         if mouse_buttons[2] == 1 and mode == EMPTY_MODE:
             figure.append(point)
@@ -163,13 +171,13 @@ if __name__ == "__main__":
             mode = LEFT_CLICK
 
         elif mouse_buttons[0] == 0 and mode == LEFT_CLICK:
-            cursor_pos = mouse_pos
+            on_click = True
             mode = EMPTY_MODE
 
         sd.start_drawing()
         clear_screen()
         figure.draw()
-        user_interface.show(cursor_pos)
+        user_interface.show(cursor_pos=mouse_pos, is_click=on_click)
         sd.finish_drawing()
         if sd.user_want_exit():
             break
