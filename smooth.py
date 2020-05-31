@@ -80,6 +80,14 @@ def flip_radius(figure):
         figure.radius = 0
 
 
+@set_event
+def print_figure(figure):
+    result = []
+    for point in figure.points:
+        result.append([point.x, point.y])
+    print(result)
+
+
 if __name__ == "__main__":
     sd._init()
     figure = Figure()
@@ -89,6 +97,7 @@ if __name__ == "__main__":
     user_interface.add_button(180, 10, "+", event=resolution_plus(figure)).set_size(30, 30)
     user_interface.add_button(220, 10, "-", event=resolution_minus(figure)).set_size(30, 30)
     user_interface.add_button(270, 10, "point", event=flip_radius(figure)).set_size(60, 30)
+    user_interface.add_button(340, 10, "print", event=print_figure(figure)).set_size(60, 30)
     while True:
         mouse_pos, mouse_buttons = sd.get_mouse_state()
         point = mouse_pos
