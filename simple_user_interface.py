@@ -7,11 +7,14 @@ class Button:
         self.x = x
         self.y = y
         self.caption = caption
-        self._event = event
         self._color1 = sd.COLOR_YELLOW
         self._color2 = sd.COLOR_DARK_YELLOW
         self._height = 10
         self._width = 30
+        if event is None:
+            self._event = self._even_null
+        else:
+            self._event = event
 
     def set_size(self, width, height):
         self._height = height
@@ -51,6 +54,9 @@ class Button:
         return (not cursor_pos is None
                 and self.x <= cursor_pos.x <= self.x + self._width
                 and self.y <= cursor_pos.y <= self.y + self._height)
+
+    def _even_null(self):
+        pass
 
 
 class UserInterface:
