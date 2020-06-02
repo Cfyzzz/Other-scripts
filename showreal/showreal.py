@@ -39,7 +39,7 @@ class Figure:
             _point.x += self.origin.x
             _point.y += self.origin.y
             self.draw_point(_point)
-            sd.line(start_point=start_point, end_point=_point)
+            sd.line(start_point=start_point, end_point=_point, width=4)
             start_point = _point
 
     def draw_point(self, point):
@@ -65,20 +65,28 @@ def clear_screen():
 
 def strat_showreal():
     word = "skillbox"
-    dist = 10
-    start_spell = sd.get_point(100, 300)
-    scale_val = 0.3
-    for idx, ch in enumerate(word):
-        figure = Figure()
-        figure.radius = 0
-        figure.points = copy(segments[ch]['data'])
-        figure.prepare_points()
+    dist = 15
+    for i in range(500):
+        start_spell = sd.get_point(100, 250)
+        sd.start_drawing()
+        clear_screen()
+        for idx, ch in enumerate(word):
+            scale_val = abs(sd.sin(idx * 20 + i * 10)) * 0.2 + 0.2
+            figure = Figure()
+            figure.radius = 0
+            figure.points = copy(segments[ch]['data'])
+            figure.prepare_points()
 
-        figure.scale([scale_val, scale_val, 1])
+            figure.scale([scale_val, scale_val, 1])
 
-        figure.origin = start_spell
-        figure.draw()
-        start_spell.x += segments[ch]['width'] * scale_val + dist
+            figure.origin = start_spell
+            figure.draw()
+            start_spell.x += segments[ch]['width'] * scale_val + dist
+
+        sd.sleep(0.1)
+        sd.finish_drawing()
+        if sd.user_want_exit():
+            break
 
 
 if __name__ == "__main__":
