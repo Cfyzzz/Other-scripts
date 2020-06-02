@@ -63,7 +63,7 @@ def clear_screen():
     sd.rectangle(left_bottom=sd.get_point(0, 0), right_top=sd.get_point(*sd.resolution), color=sd.background_color)
 
 
-def strat_showreal():
+def show_figure1():
     word = "skillbox"
     dist = 15
     for i in range(500):
@@ -87,6 +87,10 @@ def strat_showreal():
         sd.finish_drawing()
         if sd.user_want_exit():
             break
+
+
+def strat_showreal():
+    show_figure1()
 
 
 if __name__ == "__main__":
