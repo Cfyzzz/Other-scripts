@@ -1,4 +1,4 @@
-from showreal.showreal import data_showreal
+from data_showreal import data
 
 
 def get_left_bottom(data):
@@ -14,15 +14,14 @@ def get_right_top(data):
 
 
 def make_segments():
-    segments = []
-    for seg_char, seg_data in data_showreal.data.items():
+    segments = {}
+    for seg_char, seg_data in data.items():
         left_bottom = get_left_bottom(seg_data)
         right_top = get_right_top(seg_data)
         new_data = [[d[0] - left_bottom[0], d[1] - left_bottom[1]] for d in seg_data]
         width = right_top[0] - left_bottom[0]
         height = right_top[1] - left_bottom[1]
-        segment = dict(ch=seg_char, data=new_data, width=width, height=height)
-        segments.append(segment)
+        segments[seg_char] = dict(data=new_data, width=width, height=height)
     return segments
 
 
