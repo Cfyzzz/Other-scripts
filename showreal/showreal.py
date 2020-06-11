@@ -59,6 +59,73 @@ class Figure:
             self.points[idx] = Draw3D.vec_mul_matrix(vertex, matrix)
 
 
+class Snake:
+    def __init__(self, figure: Figure):
+        self.lengths = []
+        self._points = []
+        self.vertices = [[0, 0]] * len(figure.points)
+        self.start_point = [0, 0]
+        self.width_line = 4
+        self.radius_point = 4
+        first_point = figure.points[0]
+        for point in figure.points[1:]:
+            self.lengths.append(self._get_dist(first_point, point))
+            first_point = point
+
+        for point in figure.points:
+            _point = [point[0] + figure.origin.x,
+                      point[1] + figure.origin.y]
+            self._points.append(_point)
+
+    def set_start_position(self, point):
+        self.start_point = point
+        self._calculate_vertices()
+
+    def _calculate_vertices(self):
+        first_vert = self.start_point
+        self.vertices[0] = first_vert
+        for idx, vert in enumerate(self.vertices[1:], 1):
+            length = self.lengths[idx - 1]
+            target_point = self._points[idx]
+            vec = self._get_vector_for_move(first_vert, target_point, length)
+            vert[0] = first_vert[0] + vec[0]
+            vert[1] = first_vert[1] + vec[1]
+            first_vert = vert
+
+    def _get_vector_for_move(self, first_vert, target_point, length):
+        koeff_normalize = length / self._get_dist(target_point, first_vert)
+        vec = [(target_point[0] - first_vert[0]) * koeff_normalize,
+               (target_point[1] - first_vert[1]) * koeff_normalize]
+        return vec
+
+    def go_forward(self, dist):
+        target_point = self._points[0]
+        vec = self._get_vector_for_move(self.start_point, target_point, dist)
+        self.start_point[0] += vec[0]
+        self.start_point[1] += vec[1]
+        self._calculate_vertices()
+
+    def draw(self):
+        if not self.vertices:
+            return
+
+        start_point = sd.get_point(x=self.start_point[0], y=self.start_point[1])
+        self.draw_point(start_point)
+        for vert in self.vertices[1:]:
+            _point = sd.get_point(x=vert[0], y=vert[1])
+            self.draw_point(_point)
+            sd.line(start_point=start_point, end_point=_point, width=4)
+            start_point = _point
+
+    def draw_point(self, point):
+        sd.circle(center_position=point, radius=self.radius_point, width=0)
+
+    @staticmethod
+    def _get_dist(a, b):
+        """Длина линии между двумя точками"""
+        return ((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** 0.5
+
+
 def clear_screen():
     sd.rectangle(left_bottom=sd.get_point(0, 0), right_top=sd.get_point(*sd.resolution), color=sd.background_color)
 
@@ -89,8 +156,50 @@ def show_figure1():
             break
 
 
+def show_figure2():
+    word = "skillbox"
+    dist = 15
+
+    start_spell = sd.get_point(100, 250)
+    sd.start_drawing()
+    clear_screen()
+    snakes = []
+    for idx, ch in enumerate(word):
+        scale_val = 0.3
+        figure = Figure()
+        figure.radius = 0
+        figure.points = copy(segments[ch]['data'])
+        figure.prepare_points()
+
+        figure.scale([scale_val, scale_val, 1])
+
+        figure.origin = start_spell
+        figure.draw()
+        start_spell.x += segments[ch]['width'] * scale_val + dist
+
+        snake = Snake(figure)
+        snake.set_start_position([600, 600])
+        snakes.append(snake)
+
+    sd.sleep(0.1)
+    sd.finish_drawing()
+
+    for _ in range(500):
+        dist = 15
+        sd.start_drawing()
+        clear_screen()
+        for snake in snakes:
+            snake.go_forward(dist)
+            snake.draw()
+
+        sd.sleep(0.1)
+        sd.finish_drawing()
+        if sd.user_want_exit():
+            break
+
+
 def strat_showreal():
-    show_figure1()
+    show_figure2()
 
 
 if __name__ == "__main__":
