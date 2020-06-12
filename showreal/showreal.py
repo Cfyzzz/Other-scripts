@@ -67,6 +67,7 @@ class Snake:
         self.start_point = [0, 0]
         self.width_line = 4
         self.radius_point = 0
+        self.color = sd.COLOR_YELLOW
         first_point = figure.points[0]
         for point in figure.points[1:]:
             self.lengths.append(self._get_dist(first_point, point))
@@ -114,7 +115,7 @@ class Snake:
         for vert in self.vertices[1:]:
             _point = sd.get_point(x=vert[0], y=vert[1])
             self.draw_point(_point)
-            sd.line(start_point=start_point, end_point=_point, width=4)
+            sd.line(start_point=start_point, end_point=_point, width=4, color=self.color)
             start_point = _point
 
     def draw_point(self, point):
@@ -164,6 +165,7 @@ def show_figure2():
     sd.start_drawing()
     clear_screen()
     snakes = []
+    angle = 360 / len(word)
     for idx, ch in enumerate(word):
         scale_val = 0.3
         figure = Figure()
@@ -174,12 +176,18 @@ def show_figure2():
         figure.scale([scale_val, scale_val, 1])
 
         figure.origin = start_spell
-        figure.draw()
+        # figure.draw()
         start_spell = sd.get_point(x=start_spell.x + segments[ch]['width'] * scale_val + dist,
                                    y=start_spell.y)
 
         snake = Snake(figure)
-        snake.set_start_position([600, 600])
+        snake.color = sd.random_color()
+
+        center = sd.get_point(400, 300)
+        radius = 1000
+        x = sd.sin(angle * idx) * radius + center.x
+        y = sd.cos(angle * idx) * radius + center.y
+        snake.set_start_position([x, y])
         snakes.append(snake)
 
     sd.sleep(0.1)
