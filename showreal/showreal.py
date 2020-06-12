@@ -63,10 +63,10 @@ class Snake:
     def __init__(self, figure: Figure):
         self.lengths = []
         self._points = []
-        self.vertices = [[0, 0]] * len(figure.points)
+        self.vertices = [[0, 0] for _ in range(len(figure.points))]
         self.start_point = [0, 0]
         self.width_line = 4
-        self.radius_point = 4
+        self.radius_point = 0
         first_point = figure.points[0]
         for point in figure.points[1:]:
             self.lengths.append(self._get_dist(first_point, point))
@@ -175,7 +175,8 @@ def show_figure2():
 
         figure.origin = start_spell
         figure.draw()
-        start_spell.x += segments[ch]['width'] * scale_val + dist
+        start_spell = sd.get_point(x=start_spell.x + segments[ch]['width'] * scale_val + dist,
+                                   y=start_spell.y)
 
         snake = Snake(figure)
         snake.set_start_position([600, 600])
@@ -185,7 +186,7 @@ def show_figure2():
     sd.finish_drawing()
 
     for _ in range(500):
-        dist = 15
+        dist = 10
         sd.start_drawing()
         clear_screen()
         for snake in snakes:
