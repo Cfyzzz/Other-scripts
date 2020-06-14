@@ -97,6 +97,7 @@ class Snake:
         koeff_normalize = length / self._get_dist(target_point, first_vert)
         vec = [(target_point[0] - first_vert[0]) * koeff_normalize,
                (target_point[1] - first_vert[1]) * koeff_normalize]
+
         return vec
 
     def go_forward(self, dist):
@@ -134,7 +135,7 @@ def clear_screen():
 def show_figure1():
     word = "skillbox"
     dist = 15
-    for i in range(500):
+    for i in range(50):
         start_spell = sd.get_point(100, 250)
         sd.start_drawing()
         clear_screen()
@@ -193,8 +194,9 @@ def show_figure2():
     sd.sleep(0.1)
     sd.finish_drawing()
 
-    for _ in range(500):
-        dist = 10
+    dist = 15
+    for step in range(210):
+        dist -= step / 500
         sd.start_drawing()
         clear_screen()
         for snake in snakes:
@@ -213,10 +215,11 @@ def strat_showreal():
 
 if __name__ == "__main__":
     sd._init()
-    sd.background_color = sd.COLOR_BLACK
+    sd.background_color = (50, 50, 50)
     clear_screen()
     user_interface = UserInterface()
-    user_interface.add_button(10, 10, "run", event=strat_showreal).set_size(60, 30)
+    user_interface.add_button(10, 10, "fig1", event=show_figure1).set_size(60, 30)
+    user_interface.add_button(80, 10, "fig2", event=show_figure2).set_size(60, 30)
     while True:
         mouse_pos, mouse_buttons = sd.get_mouse_state()
         point = mouse_pos
