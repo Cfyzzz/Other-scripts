@@ -95,20 +95,9 @@ class Bicycle:
                                       y=(pos_pedal.y + pos_handlebar.y) / 2)
         critical_dist = self._get_dist(critical_point, self.pos_wheel_front) - 20
         if critical_dist < self.radius_front_wheel:
-            frame_points = [pos_pedal, self.pos_wheel_back, _pos_saddle, pos_handlebar, _pos_saddle, pos_pedal]
-
-            critical_point = sd.get_point(x=(_pos_saddle.x + pos_handlebar.x) / 2,
-                                          y=(_pos_saddle.y + pos_handlebar.y) / 2)
-            critical_dist = self._get_dist(critical_point, self.pos_wheel_front) - 20
+            critical_dist, frame_points = self._middle_frame(_pos_saddle, pos_handlebar, pos_pedal)
             if critical_dist < self.radius_front_wheel:
-                length_to_saddle = min(LENGTH_HUB_TO_SADDLE, self.radius_front_wheel + 10)
-
-                ang_rad = math.acos((LENGTH_HEAD_TUBE ** 2 + length_to_saddle ** 2 - LENGTH_TOP_TUBE ** 2) / (
-                            2 * LENGTH_HEAD_TUBE * length_to_saddle))
-                _pos_saddle = sd.get_point(x=math.cos(ang_rad + PI / 2) * LENGTH_HUB_TO_SADDLE + self.pos_wheel_front.x,
-                                           y=math.sin(ang_rad + PI / 2) * LENGTH_HUB_TO_SADDLE + self.pos_wheel_front.y)
-                frame_points = [self.pos_wheel_back, _pos_saddle, pos_handlebar, _pos_saddle]
-                pos_pedal = self.pos_wheel_front
+                _pos_saddle, frame_points, pos_pedal = self._high_frame(_pos_saddle, pos_handlebar)
         else:
             frame_points = [pos_pedal, self.pos_wheel_back, _pos_saddle, pos_handlebar]
 
@@ -118,6 +107,23 @@ class Bicycle:
 
         self.pos_saddle.x = _pos_saddle.x
         self.pos_saddle.y = _pos_saddle.y
+
+    def _middle_frame(self, _pos_saddle, pos_handlebar, pos_pedal):
+        frame_points = [pos_pedal, self.pos_wheel_back, _pos_saddle, pos_handlebar, _pos_saddle, pos_pedal]
+        critical_point = sd.get_point(x=(_pos_saddle.x + pos_handlebar.x) / 2,
+                                      y=(_pos_saddle.y + pos_handlebar.y) / 2)
+        critical_dist = self._get_dist(critical_point, self.pos_wheel_front) - 20
+        return critical_dist, frame_points
+
+    def _high_frame(self, _pos_saddle, pos_handlebar):
+        length_to_saddle = min(LENGTH_HUB_TO_SADDLE, self.radius_front_wheel + 10)
+        ang_rad = math.acos((LENGTH_HEAD_TUBE ** 2 + length_to_saddle ** 2 - LENGTH_TOP_TUBE ** 2) / (
+                2 * LENGTH_HEAD_TUBE * length_to_saddle))
+        _pos_saddle = sd.get_point(x=math.cos(ang_rad + PI / 2) * LENGTH_HUB_TO_SADDLE + self.pos_wheel_front.x,
+                                   y=math.sin(ang_rad + PI / 2) * LENGTH_HUB_TO_SADDLE + self.pos_wheel_front.y)
+        frame_points = [self.pos_wheel_back, _pos_saddle, pos_handlebar, _pos_saddle]
+        pos_pedal = self.pos_wheel_front
+        return _pos_saddle, frame_points, pos_pedal
 
     @staticmethod
     def _get_dist(a, b):
@@ -173,7 +179,7 @@ if __name__ == "__main__":
     sd.background_color = sd.COLOR_WHITE
     clear_screen()
     user_interface = UserInterface()
-    user_interface.add_button(10, 10, "fig1", event=show_bicycle).set_size(60, 30)
+    user_interface.add_button(10, 10, "Go!", event=show_bicycle).set_size(60, 30)
     while True:
         mouse_pos, mouse_buttons = sd.get_mouse_state()
         point = mouse_pos
